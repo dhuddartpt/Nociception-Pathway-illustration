@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Right Index Finger to Left S1 — Fast Nociceptive Pathway</title>
+<style>
+  :root{
+    --bg:#0b1020;
+    --panel:#111827;
+    --panel2:#0f172a;
+    --border:#263246;
+    --text:#e5edf7;
+    --muted:#9aa9bc;
+    --danger:#ef4444;
+    --afferent:#f59e0b;
+    --ap:#facc15;
+    --na:#38bdf8;
+    --syn:#22c55e;
+    --second:#22d3ee;
+    --tract:#ec4899;
+    --third:#818cf8;
+    --cortex:#a78bfa;
+    --inactive:.18;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,Arial,Helvetica,sans-serif;overflow-x:hidden}
+  .header{padding:24px 18px 14px;text-align:center;border-bottom:1px solid var(--border);background:linear-gradient(180deg,#0d1428 0%,#0b1020 100%)}
+  .header h1{margin:0;font-size:clamp(1.2rem,2vw,1.8rem);letter-spacing:.2px}
+  .header p{margin:8px auto 0;max-width:1000px;color:var(--muted);font-size:.88rem;line-height:1.45}
+  .controls{display:flex;justify-content:center;align-items:center;gap:8px;flex-wrap:wrap;padding:12px;border-bottom:1px solid var(--border)}
+  .controls button,.stage-button{background:var(--panel);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:7px;cursor:pointer;font-weight:600;font-size:.78rem}
+  .controls button:hover,.stage-button:hover{border-color:#5a6b84}
+  .controls button.active{border-color:var(--ap);color:var(--ap)}
+  .stage-strip{display:flex;justify-content:center;gap:6px;flex-wrap:wrap;padding:10px 12px 14px;max-width:1180px;margin:0 auto}
+  .stage-button{min-width:30px;padding:6px 9px;font-size:.72rem;color:var(--muted)}
+  .stage-button.active{color:white;border-color:var(--danger);background:rgba(239,68,68,.13)}
+  .canvas-wrap{display:flex;justify-content:center;overflow:auto;padding:10px}
+  svg{min-width:1120px;max-width:1220px;width:100%;height:auto}
+  text{font-family:Inter,Arial,Helvetica,sans-serif}
+  .region-title{font-size:13px;font-weight:800;letter-spacing:.35px}
+  .label{font-size:11px;fill:var(--text)}
+  .label-muted{font-size:10px;fill:var(--muted)}
+  .label-small{font-size:8.5px;fill:var(--muted)}
+  .stage-node{cursor:pointer;transition:opacity .25s ease,filter .25s ease}
+  .stage-node.dim{opacity:var(--inactive)}
+  .stage-node.past{opacity:.58}
+  .stage-node.active{opacity:1;filter:url(#softGlow)}
+  .path-base{fill:none;stroke-linecap:round;stroke-linejoin:round}
+  .callout{fill:#0e1729;stroke:#2b3950;stroke-width:1.2}
+  .info-panel{max-width:1120px;margin:0 auto 30px;padding:0 16px}
+  .info-card{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:14px 16px}
+  .info-card h2{font-size:1rem;margin:0 0 6px;color:white}
+  .info-card p{margin:0;color:var(--muted);font-size:.84rem;line-height:1.55}
+  .teaching-note{margin-top:8px;padding-top:8px;border-top:1px solid #213047;color:#c7d2e3;font-size:.78rem}
+  .legend{display:flex;flex-wrap:wrap;justify-content:center;gap:14px;padding:2px 14px 18px;color:var(--muted);font-size:.72rem}
+  .sw{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+  .pulse{animation:pulse 1.3s ease-in-out infinite}
+  .blink{animation:blink 1.5s ease-in-out infinite}
+  .paused .pulse,.paused .blink{animation-play-state:paused}
+  @keyframes pulse{0%,100%{opacity:.25}50%{opacity:1}}
+  @keyframes blink{0%,100%{opacity:.45}50%{opacity:1}}
+  @media(max-width:700px){.header p{font-size:.78rem}.info-card p{font-size:.79rem}}
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>Fast Nociceptive Pathway — Right Index Finger to Left S1</h1>
+  <p>Noxious mechanical stimulus → free nerve ending → receptor potential → Aδ action potential → DRG → dorsal horn glutamate synapse → decussation → contralateral anterolateral/spinothalamic ascent → VPL thalamus → left primary somatosensory cortex</p>
+</div>
+
+<div class="controls">
+  <button onclick="previousStage()">◀ Back</button>
+  <button id="playBtn" class="active" onclick="togglePlay()">⏸ Pause</button>
+  <button onclick="nextStage()">Next ▶</button>
+  <button onclick="restart()">↺ Restart</button>
+</div>
+<div class="stage-strip" id="stageStrip"></div>
+
+<div class="canvas-wrap" id="canvasWrap">
+<svg id="pathwaySvg" viewBox="0 0 1180 820" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="svgTitle svgDesc">
+<title id="svgTitle">Right index finger fast nociceptive pathway to left primary somatosensory cortex</title>
+<desc id="svgDesc">Nine-stage educational animation showing a noxious stimulus at the right index finger, transduction at a free nerve ending, A-delta action potential propagation, dorsal root ganglion passage, dorsal horn glutamate synapse, spinal decussation, contralateral anterolateral ascent, VPL thalamic relay, and arrival at the left S1 hand representation.</desc>
+<defs>
+  <filter id="softGlow"><feGaussianBlur stdDeviation="2.4" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  <marker id="arrowA" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0,0 8,3 0,6" fill="#f59e0b"/></marker>
+  <marker id="arrowC" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0,0 8,3 0,6" fill="#22d3ee"/></marker>
+  <marker id="arrowP" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0,0 8,3 0,6" fill="#ec4899"/></marker>
+  <marker id="arrowT" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0,0 8,3 0,6" fill="#818cf8"/></marker>
+</defs>
+
+<!-- Hidden motion paths -->
+<path id="motionPrimary" d="M 180 650 C 230 610, 260 555, 300 505 C 330 468, 350 435, 365 405" fill="none" stroke="none"/>
+<path id="motionDrg" d="M 365 405 C 392 395, 420 392, 448 395 C 470 400, 495 410, 515 423" fill="none" stroke="none"/>
+<path id="motionCross" d="M 588 474 C 603 497, 630 513, 665 515 C 700 517, 724 500, 739 478" fill="none" stroke="none"/>
+<path id="motionAscent" d="M 742 472 C 770 420, 786 352, 805 285 C 820 228, 829 175, 842 133" fill="none" stroke="none"/>
+<path id="motionThalamus" d="M 842 132 C 875 118, 910 112, 940 120 C 964 128, 984 145, 995 169" fill="none" stroke="none"/>
+<path id="motionCortex" d="M 1000 172 C 1028 145, 1055 125, 1086 118 C 1101 114, 1117 114, 1130 119" fill="none" stroke="none"/>
+
+<!-- 1. Finger stimulus -->
+<g class="stage-node" data-stage="0" onclick="setStage(0)">
+  <text x="145" y="730" text-anchor="middle" class="region-title" fill="#ef4444">① RIGHT INDEX FINGER</text>
+  <path d="M 82 675 C 88 646,105 622,128 612 C 145 604,165 608,176 620 C 185 629,184 642,172 650 C 162 657,148 657,136 653 C 126 650,117 654,112 663 C 105 677,104 694,108 710 L 78 710 C 76 696,78 684,82 675 Z" fill="#2b1d1a" stroke="#946f62" stroke-width="1.7"/>
+  <rect x="131" y="584" width="18" height="57" rx="8" fill="#3a2721" stroke="#a27767" stroke-width="1.5" transform="rotate(8 140 612)"/>
+  <path d="M 140 584 L 146 565 L 150 586" fill="#d1d5db" stroke="#9ca3af" stroke-width="1"/>
+  <text x="168" y="570" class="label-small" fill="#ef4444">noxious mechanical stimulus</text>
+  <circle cx="142" cy="630" r="10" fill="none" stroke="#ef4444" stroke-width="1.6" class="pulse"/>
+  <circle cx="142" cy="630" r="18" fill="none" stroke="#ef4444" stroke-width=".8" class="pulse"/>
+  <text x="55" y="618" class="label" fill="#fbbf24">Free nerve ending</text>
+  <text x="55" y="631" class="label-small">Aδ nociceptor terminal</text>
+</g>
+
+<!-- 2. Transduction -->
+<g class="stage-node" data-stage="1" onclick="setStage(1)">
+  <rect x="36" y="270" width="285" height="250" rx="10" class="callout"/>
+  <text x="178" y="294" text-anchor="middle" class="region-title" fill="#38bdf8">② TRANSDUCTION → THRESHOLD</text>
+  <text x="52" y="320" class="label">1. Noxious deformation opens</text>
+  <text x="66" y="336" class="label" fill="#7dd3fc">mechanosensitive transduction channels</text>
+  <rect x="82" y="360" width="190" height="18" rx="6" fill="#20314e"/>
+  <path d="M 142 350 L 138 361 L 138 379 L 142 390" stroke="#7dd3fc" stroke-width="4" fill="none"/>
+  <path d="M 165 350 L 169 361 L 169 379 L 165 390" stroke="#7dd3fc" stroke-width="4" fill="none"/>
+  <circle cx="153" cy="341" r="5" fill="#38bdf8"/><text x="162" y="345" class="label-small" fill="#38bdf8">Na⁺ / cations</text>
+  <line x1="153" y1="347" x2="153" y2="385" stroke="#38bdf8" stroke-width="1.8"/>
+  <text x="52" y="414" class="label">2. Local receptor/generator potential</text>
+  <text x="52" y="432" class="label">3. If threshold is reached, voltage-gated</text>
+  <text x="66" y="448" class="label" fill="#facc15">Na⁺ channels open → action potential begins</text>
+  <polyline points="54,484 95,484 111,484 121,445 133,497 146,476 182,476 210,476 265,476" fill="none" stroke="#facc15" stroke-width="2"/>
+  <line x1="54" y1="466" x2="270" y2="466" stroke="#64748b" stroke-width=".7" stroke-dasharray="4 3"/>
+  <text x="275" y="469" class="label-small">threshold</text>
+  <line x1="142" y1="630" x2="142" y2="520" stroke="#f59e0b" stroke-width="2.4"/>
+</g>
+
+<!-- 3. Primary A-delta propagation -->
+<g class="stage-node" data-stage="2" onclick="setStage(2)">
+  <path d="M 142 630 C 200 600, 250 548, 300 505 C 330 478,350 440,365 405" class="path-base" stroke="#f59e0b" stroke-width="5" opacity=".7" marker-end="url(#arrowA)"/>
+  <g opacity=".7">
+    <line x1="184" y1="601" x2="193" y2="611" stroke="#fde68a" stroke-width="3"/>
+    <line x1="220" y1="570" x2="229" y2="580" stroke="#fde68a" stroke-width="3"/>
+    <line x1="255" y1="538" x2="264" y2="548" stroke="#fde68a" stroke-width="3"/>
+    <line x1="291" y1="506" x2="300" y2="516" stroke="#fde68a" stroke-width="3"/>
+  </g>
+  <text x="248" y="576" class="region-title" fill="#f59e0b">③ Aδ ACTION POTENTIAL</text>
+  <text x="248" y="591" class="label-small">thinly myelinated • saltatory conduction • first-order neuron</text>
+</g>
+
+<!-- 4. DRG -->
+<g class="stage-node" data-stage="3" onclick="setStage(3)">
+  <text x="405" y="342" text-anchor="middle" class="region-title" fill="#f59e0b">④ DRG — NO SYNAPSE</text>
+  <ellipse cx="405" cy="405" rx="62" ry="34" fill="#21170c" stroke="#f59e0b" stroke-width="1.7"/>
+  <circle cx="405" cy="405" r="17" fill="#3a2507" stroke="#fbbf24" stroke-width="1.3"/>
+  <circle cx="405" cy="405" r="6" fill="#5a3505"/>
+  <path d="M 365 405 C 380 395,390 391,405 388 C 430 390,452 402,470 414" fill="none" stroke="#f59e0b" stroke-width="3"/>
+  <text x="405" y="446" text-anchor="middle" class="label-small">pseudo-unipolar sensory neuron cell body</text>
+  <text x="405" y="459" text-anchor="middle" class="label-small" fill="#fbbf24">signal passes the cell body without synapsing</text>
+  <path d="M 466 414 C 486 415,500 418,515 423" fill="none" stroke="#f59e0b" stroke-width="3" marker-end="url(#arrowA)"/>
+  <text x="485" y="402" class="label-small">dorsal root</text>
+</g>
+
+<!-- 5. Spinal cord and dorsal horn synapse -->
+<g class="stage-node" data-stage="4" onclick="setStage(4)">
+  <text x="630" y="345" text-anchor="middle" class="region-title" fill="#22d3ee">⑤ DORSAL HORN SYNAPSE</text>
+  <ellipse cx="640" cy="455" rx="132" ry="94" fill="#171c2d" stroke="#64748b" stroke-width="1.8"/>
+  <path d="M 640 391 C 610 401,596 391,579 384 C 564 378,552 391,556 408 C 560 427,579 439,600 442 C 612 444,622 449,630 455 C 620 462,607 470,596 479 C 577 495,570 514,584 526 C 600 540,620 523,640 486 C 660 523,680 540,696 526 C 710 514,703 495,684 479 C 673 470,660 462,650 455 C 658 449,668 444,680 442 C 701 439,720 427,724 408 C 728 391,716 378,701 384 C 684 391,670 401,640 391 Z" fill="#40485a" stroke="#7c8798" stroke-width="1"/>
+  <circle cx="640" cy="455" r="5" fill="#0b1020"/>
+  <text x="535" y="392" class="label-small">dorsal horn</text>
+  <path d="M 515 423 C 535 420,551 421,570 425" fill="none" stroke="#f59e0b" stroke-width="3"/>
+  <ellipse cx="576" cy="426" rx="14" ry="9" fill="#3b2608" stroke="#f59e0b" stroke-width="1.2"/>
+  <circle cx="585" cy="439" r="3" fill="#22c55e"/><circle cx="578" cy="442" r="3" fill="#22c55e"/><circle cx="590" cy="447" r="3" fill="#22c55e"/>
+  <text x="542" y="456" class="label-small" fill="#22c55e">glutamate</text>
+  <circle cx="597" cy="463" r="11" fill="#073448" stroke="#22d3ee" stroke-width="1.5"/>
+  <line x1="597" y1="452" x2="590" y2="446" stroke="#22d3ee" stroke-width="1.5"/>
+  <text x="518" y="486" class="label-small" fill="#22d3ee">2nd-order projection neuron</text>
+  <text x="516" y="500" class="label-small">EPSP → threshold → new AP</text>
+</g>
+
+<!-- 6. Decussation -->
+<g class="stage-node" data-stage="5" onclick="setStage(5)">
+  <path d="M 597 474 C 607 495,630 510,665 515 C 698 520,725 502,741 477" class="path-base" stroke="#22d3ee" stroke-width="4" marker-end="url(#arrowC)"/>
+  <text x="665" y="555" text-anchor="middle" class="region-title" fill="#22d3ee">⑥ DECUSSATION</text>
+  <text x="665" y="570" text-anchor="middle" class="label-small">anterior white commissure • crosses near entry level</text>
+  <text x="710" y="438" class="label-small" fill="#ec4899">now on LEFT side of CNS</text>
+</g>
+
+<!-- 7. Anterolateral ascent -->
+<g class="stage-node" data-stage="6" onclick="setStage(6)">
+  <path d="M 741 477 C 770 420,786 352,805 285 C 820 228,829 175,842 133" class="path-base" stroke="#ec4899" stroke-width="5" opacity=".8" marker-end="url(#arrowP)"/>
+  <text x="794" y="324" text-anchor="end" class="region-title" fill="#ec4899">⑦ ANTEROLATERAL SYSTEM</text>
+  <text x="794" y="339" text-anchor="end" class="label-small">spinothalamic component • ascends contralaterally</text>
+  <ellipse cx="842" cy="118" rx="34" ry="18" fill="#171c2d" stroke="#64748b" stroke-width="1"/>
+  <text x="842" y="121" text-anchor="middle" class="label-small">brainstem</text>
+</g>
+
+<!-- 8. Thalamus -->
+<g class="stage-node" data-stage="7" onclick="setStage(7)">
+  <text x="957" y="71" text-anchor="middle" class="region-title" fill="#818cf8">⑧ VPL THALAMUS</text>
+  <ellipse cx="953" cy="122" rx="61" ry="36" fill="#21162f" stroke="#a78bfa" stroke-width="1.5"/>
+  <ellipse cx="938" cy="125" rx="24" ry="16" fill="#412052" stroke="#c084fc" stroke-width="1"/>
+  <text x="938" y="128" text-anchor="middle" class="label" fill="#e9d5ff">VPL</text>
+  <path d="M 842 133 C 875 118,905 115,918 121" fill="none" stroke="#ec4899" stroke-width="3" marker-end="url(#arrowP)"/>
+  <circle cx="958" cy="123" r="9" fill="#312e81" stroke="#818cf8" stroke-width="1.4"/>
+  <text x="953" y="169" text-anchor="middle" class="label-small">2nd synapse → third-order neuron</text>
+  <path d="M 990 115 C 1030 95,1075 92,1110 104" fill="none" stroke="#818cf8" stroke-width="3" marker-end="url(#arrowT)"/>
+  <text x="1050" y="82" text-anchor="middle" class="label-small" fill="#a5b4fc">thalamocortical projection</text>
+</g>
+
+<!-- 9. Cortex -->
+<g class="stage-node" data-stage="8" onclick="setStage(8)">
+  <text x="1015" y="235" text-anchor="middle" class="region-title" fill="#a78bfa">⑨ LEFT PRIMARY SOMATOSENSORY CORTEX (S1)</text>
+  <text x="1015" y="250" text-anchor="middle" class="label-small">postcentral gyrus • Brodmann areas 3, 1, 2</text>
+  <!-- Left lateral hemisphere -->
+  <path d="M 875 286 C 860 274,862 247,879 226 C 895 206,916 199,937 202 C 960 184,990 181,1015 191 C 1043 181,1076 192,1090 212 C 1116 214,1133 233,1136 256 C 1154 274,1151 300,1138 316 C 1132 346,1103 366,1077 366 C 1057 383,1028 385,1008 374 C 984 384,954 375,940 358 C 914 360,892 344,887 322 C 870 314,864 299,875 286 Z" fill="#19172f" stroke="#6d5ba5" stroke-width="1.7"/>
+  <!-- central sulcus -->
+  <path d="M 1005 198 C 995 223,998 252,1004 278 C 1010 304,1008 330,1018 357" fill="none" stroke="#7c3aed" stroke-width="2" stroke-dasharray="5 3"/>
+  <text x="985" y="204" class="label-small" fill="#a78bfa">central sulcus</text>
+  <!-- postcentral gyrus -->
+  <path d="M 1019 198 C 1010 225,1015 254,1021 280 C 1027 307,1027 333,1037 358" fill="none" stroke="#c4b5fd" stroke-width="7" opacity=".4"/>
+  <!-- somatotopic labels -->
+  <line x1="1043" y1="214" x2="1090" y2="205" stroke="#64748b" stroke-width="1"/>
+  <text x="1095" y="207" class="label-small">lower limb → mostly medial wall</text>
+  <line x1="1040" y1="245" x2="1097" y2="239" stroke="#64748b" stroke-width="1"/>
+  <text x="1101" y="242" class="label-small">trunk / arm</text>
+  <line x1="1033" y1="281" x2="1097" y2="281" stroke="#ef4444" stroke-width="1.4"/>
+  <text x="1101" y="284" class="label" fill="#ef4444">HAND / FINGERS</text>
+  <line x1="1036" y1="327" x2="1097" y2="334" stroke="#64748b" stroke-width="1"/>
+  <text x="1101" y="338" class="label-small">face / oral region</text>
+  <!-- index finger target -->
+  <circle cx="1030" cy="281" r="9" fill="rgba(239,68,68,.20)" stroke="#ef4444" stroke-width="2" class="blink"/>
+  <circle cx="1030" cy="281" r="17" fill="none" stroke="#ef4444" stroke-width="1" class="pulse"/>
+  <text x="947" y="285" text-anchor="end" class="label" fill="#ef4444">right index finger represented here</text>
+  <rect x="855" y="399" width="300" height="64" rx="8" fill="rgba(167,139,250,.07)" stroke="#6d5ba5" stroke-width="1"/>
+  <text x="1005" y="420" text-anchor="middle" class="label" fill="#ddd6fe">S1 helps localize the stimulus and estimate intensity.</text>
+  <text x="1005" y="438" text-anchor="middle" class="label-small">Pain is not “made” by S1 alone; the pain experience reflects distributed brain processing.</text>
+  <text x="1005" y="453" text-anchor="middle" class="label-small" fill="#fca5a5">Right finger input is represented predominantly in LEFT S1 after spinal decussation.</text>
+</g>
+
+<!-- signal dot -->
+<circle id="signalDot" cx="142" cy="630" r="6" fill="#facc15" filter="url(#softGlow)" pointer-events="none"/>
+</svg>
+</div>
+
+<div class="legend">
+  <span><i class="sw" style="background:#ef4444"></i>noxious stimulus / target</span>
+  <span><i class="sw" style="background:#f59e0b"></i>first-order Aδ afferent</span>
+  <span><i class="sw" style="background:#22c55e"></i>glutamate</span>
+  <span><i class="sw" style="background:#22d3ee"></i>second-order neuron</span>
+  <span><i class="sw" style="background:#ec4899"></i>contralateral anterolateral ascent</span>
+  <span><i class="sw" style="background:#818cf8"></i>third-order thalamocortical neuron</span>
+</div>
+
+<div class="info-panel">
+  <div class="info-card">
+    <h2 id="infoTitle"></h2>
+    <p id="infoText"></p>
+    <div class="teaching-note" id="teachNote"></div>
+  </div>
+</div>
+
+<script>
+const stages = [
+  {
+    short:'Finger',
+    title:'1. Noxious stimulus reaches the right index finger',
+    text:'A noxious mechanical stimulus deforms tissue around a free nerve ending of a thinly myelinated Aδ primary afferent. At this point the nervous system is receiving threat-related sensory input; the peripheral ending is not a “pain receptor.”',
+    note:'Teaching point: nociception is neural encoding of potentially tissue-threatening events. Pain is a later perceptual output.',
+    path:null, color:'#ef4444', duration:2200
+  },
+  {
+    short:'Transduction',
+    title:'2. Transduction creates a receptor potential and can reach threshold',
+    text:'Mechanosensitive transduction channels open and allow cation influx, producing a local receptor/generator potential. If depolarization reaches threshold at the spike-initiation region, voltage-gated Na⁺ channels open and an action potential is generated.',
+    note:'Correction from the original exemplar: the mechanical stimulus does not simply “open Nav1.7/Nav1.8.” Transduction precedes action-potential initiation.',
+    path:null, color:'#38bdf8', duration:3000
+  },
+  {
+    short:'Aδ AP',
+    title:'3. The action potential propagates along the first-order Aδ neuron',
+    text:'The action potential is regenerated along the thinly myelinated Aδ axon. Saltatory conduction allows the electrical event to travel rapidly from the finger toward the spinal cord.',
+    note:'The traveling event is an action potential carrying nociceptive information—not a packet of pain.',
+    path:'motionPrimary', color:'#facc15', duration:3300
+  },
+  {
+    short:'DRG',
+    title:'4. The signal passes the dorsal root ganglion without synapsing',
+    text:'The cell body of the first-order pseudo-unipolar sensory neuron sits in the dorsal root ganglion. The action potential continues along the central process through the dorsal root toward the dorsal horn.',
+    note:'High-yield distinction: DRG = sensory neuron cell body location. It is not the first synapse in this pathway.',
+    path:'motionDrg', color:'#facc15', duration:2600
+  },
+  {
+    short:'Dorsal horn',
+    title:'5. First synapse: glutamate excites a second-order dorsal-horn neuron',
+    text:'The Aδ terminal releases glutamate in the dorsal horn. Excitatory postsynaptic potentials depolarize the second-order projection neuron; if threshold is reached, a new action potential begins in that neuron.',
+    note:'For this fast Aδ teaching pathway, glutamate is emphasized. Substance P is deliberately omitted here to avoid mixing the fast pathway with the stronger C-fiber/slow-transmission emphasis.',
+    path:null, color:'#22c55e', duration:3400
+  },
+  {
+    short:'Cross',
+    title:'6. The second-order axon decussates in the spinal cord',
+    text:'The second-order neuron crosses through the anterior white commissure near the level of entry. Right-finger information therefore ascends predominantly on the left side of the spinal cord.',
+    note:'This crossing is the key laterality transition that allows a right-sided peripheral stimulus to reach left cerebral somatosensory cortex.',
+    path:'motionCross', color:'#22d3ee', duration:2800
+  },
+  {
+    short:'ALS',
+    title:'7. The second-order neuron ascends contralaterally in the anterolateral system',
+    text:'The second-order axon travels rostrally in the left anterolateral system, including the spinothalamic component, through the spinal cord and brainstem toward the thalamus.',
+    note:'The anterolateral system is broader than a single “wire.” This animation follows the discriminative pathway to the VPL because the teaching target is localization of the finger stimulus.',
+    path:'motionAscent', color:'#ec4899', duration:3600
+  },
+  {
+    short:'VPL',
+    title:'8. Brief thalamic relay: second synapse in the VPL',
+    text:'The ascending second-order neuron synapses in the contralateral ventral posterolateral (VPL) thalamus. A third-order neuron then projects toward primary somatosensory cortex through the thalamocortical pathway.',
+    note:'The thalamus is a relay and processing station, not simply a passive cable connector.',
+    path:'motionThalamus', color:'#818cf8', duration:2800
+  },
+  {
+    short:'Left S1',
+    title:'9. The third-order neuron reaches the left S1 hand representation',
+    text:'The thalamocortical neuron reaches the postcentral gyrus. The hand and fingers occupy a disproportionately large lateral S1 representation, allowing accurate localization of stimulation from the right index finger.',
+    note:'S1 contributes sensory-discriminative information such as location and intensity. The full pain experience arises from distributed processing across multiple cortical and subcortical networks.',
+    path:'motionCortex', color:'#a78bfa', duration:3200
+  }
+];
+
+let currentStage = 0;
+let playing = true;
+let autoplayTimer = null;
+let animFrame = null;
+let motionStart = null;
+let motionPausedAt = 0;
+let motionPath = null;
+let motionDuration = 3000;
+const dot = document.getElementById('signalDot');
+const svg = document.getElementById('pathwaySvg');
+const wrap = document.getElementById('canvasWrap');
+const strip = document.getElementById('stageStrip');
+
+stages.forEach((s,i)=>{
+  const b=document.createElement('button');
+  b.className='stage-button';
+  b.textContent=(i+1)+' '+s.short;
+  b.onclick=()=>setStage(i,true);
+  strip.appendChild(b);
+});
+
+function setStage(index, user=false){
+  currentStage=(index+stages.length)%stages.length;
+  document.querySelectorAll('.stage-node').forEach(node=>{
+    const n=Number(node.dataset.stage);
+    node.classList.toggle('active',n===currentStage);
+    node.classList.toggle('past',n<currentStage);
+    node.classList.toggle('dim',n>currentStage);
+  });
+  document.querySelectorAll('.stage-button').forEach((b,i)=>b.classList.toggle('active',i===currentStage));
+  const s=stages[currentStage];
+  document.getElementById('infoTitle').textContent=s.title;
+  document.getElementById('infoText').textContent=s.text;
+  document.getElementById('teachNote').textContent=s.note;
+  resetMotion();
+  scheduleAutoplay();
+}
+
+function resetMotion(){
+  if(animFrame) cancelAnimationFrame(animFrame);
+  motionStart=null;
+  motionPausedAt=0;
+  const s=stages[currentStage];
+  dot.setAttribute('fill',s.color);
+  if(s.path){
+    motionPath=document.getElementById(s.path);
+    motionDuration=s.duration||3000;
+    dot.style.display='block';
+    const p=motionPath.getPointAtLength(0);
+    dot.setAttribute('cx',p.x);dot.setAttribute('cy',p.y);
+    if(playing) animFrame=requestAnimationFrame(animateDot);
+  }else{
+    motionPath=null;
+    dot.style.display='block';
+    const fallback=[
+      [142,630],[153,470],[142,630],[405,405],[584,442],[597,474],[741,477],[938,125],[1030,281]
+    ][currentStage];
+    dot.setAttribute('cx',fallback[0]);dot.setAttribute('cy',fallback[1]);
+  }
+}
+
+function animateDot(ts){
+  if(!playing||!motionPath) return;
+  if(motionStart===null) motionStart=ts-motionPausedAt;
+  const elapsed=ts-motionStart;
+  const progress=(elapsed%motionDuration)/motionDuration;
+  const len=motionPath.getTotalLength();
+  const p=motionPath.getPointAtLength(len*progress);
+  dot.setAttribute('cx',p.x);dot.setAttribute('cy',p.y);
+  animFrame=requestAnimationFrame(animateDot);
+}
+
+function togglePlay(){
+  playing=!playing;
+  const btn=document.getElementById('playBtn');
+  if(playing){
+    btn.textContent='⏸ Pause';btn.classList.add('active');wrap.classList.remove('paused');
+    motionStart=null;
+    if(motionPath) animFrame=requestAnimationFrame(animateDot);
+    scheduleAutoplay();
+  }else{
+    btn.textContent='▶ Play';btn.classList.remove('active');wrap.classList.add('paused');
+    if(animFrame) cancelAnimationFrame(animFrame);
+    clearTimeout(autoplayTimer);
+  }
+}
+
+function scheduleAutoplay(){
+  clearTimeout(autoplayTimer);
+  if(!playing) return;
+  const hold=Math.max(3600,stages[currentStage].duration+700);
+  autoplayTimer=setTimeout(()=>{
+    if(currentStage===stages.length-1){
+      currentStage=0;
+      setStage(0);
+    }else nextStage();
+  },hold);
+}
+function nextStage(){setStage(Math.min(currentStage+1,stages.length-1));}
+function previousStage(){setStage(Math.max(currentStage-1,0));}
+function restart(){setStage(0);}
+
+setStage(0);
+</script>
+</body>
+</html>
